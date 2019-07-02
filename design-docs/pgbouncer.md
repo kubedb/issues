@@ -43,10 +43,10 @@ spec:
     poolMode: "session"
     maxClientConn: 10000
     defaultPoolSize: 100
-	autodbIdleTimeout: 3600
-	minPoolSize: 100
-	maxDbConnections: 100
-	maxUserConnections: 20
+    autodbIdleTimeout: 3600
+    minPoolSize: 100
+    maxDbConnections: 100
+    maxUserConnections: 20
     adminUsers:
     - admin1
     - admin2
@@ -121,6 +121,8 @@ This field is to be used to specify connection information to configure PgBounce
   The default is unlimited.
 
 - `spec.pgBouncerConfig.maxUserConnections` specifies the maximum number of server connections per-user. It should be noted that when you hit the limit, closing a client connection to one pool will not immediately allow a server connection to be established for another pool, because the server connection for the first pool is still open. Once the server connection closes (due to idle timeout), a new server connection will immediately be opened for the waiting pool.
+
+- `spec.pgBouncerConfig.adminUsers` specifies the list of users who can access PgBouncer admin console.
 
 #### spec.users:
 
