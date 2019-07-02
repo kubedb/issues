@@ -1,8 +1,8 @@
 # PgBouncer Overview
 
-[PgBouncer](https://pgbouncer.github.io/) is an open-source, lightweight, single-binary connection-pooling middleware for PostgreSQL. PgBouncer maintains a pool of connections for each locally stored user, and database pair. It is typically configured to hand out one of these connections to a new incoming client connection, and return it back in to the pool when the client disconnects. PgBouncer can pool connections to one or more PostgreSQL databases on possibly different servers and serve clients over TCP and Unix domain sockets. For a more hands-on experience, see this brief [tutorial on how to create a PgBouncer](https://pgdash.io/blog/pgbouncer-connection-pool.html) for PostgreSQL databa.
+[PgBouncer](https://pgbouncer.github.io/) is an open-source, lightweight, single-binary connection-pooling middleware for PostgreSQL. PgBouncer maintains a pool of connections for each locally stored user-database pair. It is typically configured to hand out one of these connections to a new incoming client connection, and return it back in to the pool when the client disconnects. PgBouncer can pool connections to one or more PostgreSQL databases on possibly different servers and serve clients over TCP and Unix domain sockets. For a more hands-on experience, see this brief [tutorial on how to create a PgBouncer](https://pgdash.io/blog/pgbouncer-connection-pool.html) for PostgreSQL database.
 
-With connection pooling, the clients connect to a proxy server which maintains a pool of direct connections to the real PostgreSQL server. We are palnning to introduce a CRD based implementation of PgBouncer baked right into KubeDB for PostgreSQL. We are hoping that the implementation of connection pooling will be effective in improving the performance of your apps by decreasing the load on your PostgreSQL servers.
+With connection pooling, the clients connect to a proxy server which maintains a pool of direct connections to the real PostgreSQL server. We are palnning to introduce a CRD based implementation of PgBouncer baked right into KubeDB for Postgres. We are hoping that the implementation of connection pooling will be effective in improving the performance of your apps by decreasing the load on your PostgreSQL servers.
 
 
 
@@ -10,12 +10,10 @@ With connection pooling, the clients connect to a proxy server which maintains a
 
  Goal of this project is to introduce the following features to KubeDB:
 
-- A full fledged yet separate connection pooling Middleware for PostgrsSQL databases
+- A full fledged yet separate connection pooling Middleware for Postgres
 - Finer control over every bit of configuration via CRD manipulation
 - Quick and easy access to PgBouncer admin interface, logs, and stats
 - Possibility of stats management with Prometheus
-
-
 
 ## PgBouncer CRD
 
@@ -23,9 +21,9 @@ Users will be able to manage connection to one or more Postgres databases of the
 
 **what users need to do**
 
-- Create a PgBouncer cutom resource.
+- Create a PgBouncer custom resource.
 
-A sample CRD to create a PgBouncer for KubeDB managed PostgreSQL databeses 
+A sample CRD to create a PgBouncer for KubeDB managed PostgreSQL databases 
 
 ```yaml
 apiVersion: kubedb.com/v1alpha1
@@ -64,7 +62,7 @@ spec:
    
 ```
 
-Here, `Pgbouncer` will be introduced as a new `kind` to handle connection-pooling for PostgreSQL. 
+Here, `Pgbouncer` will be introduced as a new `kind` to handle connection pooling for PostgreSQL. 
 
 The `spec` section of `Pgbouncer` will have three fields to specify the database info, pgbouncer connection configuration, and user list. 
 
@@ -141,4 +139,4 @@ Our implementation of PgBouncer is expected have close ties with Postgres CRD an
 
 PgBouncer is a standalone relaying service. A single instance of PgBouncer can access many different databases running inside different Postgres objects. Therefore, the relation between PgBouncer and Postgres objects is one-to-many. Our intention is to let users leverage this feature to make their workflow easier, and more manageable. 
 
-Additionally, PgBouncer may also possibly be created from Postgres CRD by adding PgBouncer template to it, so that the users can create a connection-pooler right from the get go, and then create databases and database users later.
+Additionally, PgBouncer may also possibly be created from Postgres CRD by adding PgBouncer template to it, so that the users can create a connection pooler right from the get go, and then create databases and database users later.
