@@ -4,8 +4,6 @@
 
 With connection pooling, the clients connect to a proxy server which maintains a pool of direct connections to the real PostgreSQL server. We are palnning to introduce a CRD based implementation of PgBouncer baked right into KubeDB for Postgres. We are hoping that the implementation of connection pooling will be effective in improving the performance of your apps by decreasing the load on your PostgreSQL servers.
 
-
-
 ## Goal
 
  Goal of this project is to introduce the following features to KubeDB:
@@ -72,7 +70,7 @@ This field is to be used to specify detailed information about PostgreSQL databa
 
 - `spec.databases.dbAlias` is used to name a server-database pair. This alias is used to access the mentioned database  via pgbouncer. 
 - `spec.databases.dbName` specifies the name of the target database. This must be a valid database name to facilitate a successful connection. 
-- `spec.databases.pgObjectName` specifies the name of the Postgres object in which the target database is running. This name is used for port-forwarding to establish connection from PgBouncer's proxy server to the target server. Primary pod of the Postgres object is to be used to establish the said connection. 
+- `spec.databases.pgObjectName` specifies the name of the Postgres object in which the target database is running. This name is used to establish connection from PgBouncer's proxy server to the target server. Primary pod of the Postgres object or the associated service is to be used to establish the said connection. 
 
 #### spec.pgBouncerConfig:
 
@@ -133,7 +131,7 @@ Specifies the list of users that are allowed to access Postgres databases via Pg
 
 **How it will work?**
 PgBouncer needs a configuration file and a user credentials file. The configuration file contains information about database, and connection configuration. The user credentials file contains username and password of users who are allowed to access databases via PgBouncer.
-We intent to use the CRD above to collect the necessary information to fill out these information. Also the `spec.databases.pgObjectName` of the CRD is to be used for port-forwarding in order to establish connection between the primary pod of the postgres object and the clients via PgBouncer.  
+We intent to use the CRD above to collect the necessary information to fill out these information. Also the `spec.databases.pgObjectName` of the CRD is to be used in order to establish connection between the primary pod of the postgres object and the clients via PgBouncer.  
 
 ## KubeDB integration
 
