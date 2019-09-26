@@ -25,42 +25,41 @@ A sample CRD to create a PgBouncer for KubeDB managed PostgreSQL databases
 
 ```yaml
 apiVersion: kubedb.com/v1alpha1
-kind: Pgbouncer
+kind: PgBouncer
 metadata:
-  name: pgbouncer
+  name: pgbouncer-server
   namespace: demo
 spec:
+  version: "1.11.0"
+  replicas: 1
   databases:
-  - dbAlias: "any-unique-alias" 
-    dbName: "name-of-an-existing-pg-database" //default: "postgres"
-    pgObjectName: "name-of-the-postgres-object-containing-the-db"   
-  - dbAlias: "another-unique-alias"
-    dbName: "name-of-another-existing-pg-database"
-    pgObjectName: "name-of-the-postgres-object-containing-the-mentioned-db"   
-  pgBouncerConfig:
-    poolMode: "session"
-    maxClientConn: 10000
-    defaultPoolSize: 100
-    autodbIdleTimeout: 3600
-    minPoolSize: 100
-    maxDbConnections: 100
-    maxUserConnections: 20
+  - alias: "postgres"
+    databaseName: "postgres"
+    appBindingName: "quick-postgress"
+    appBindingNamespace: "demo"
+  connectionPool:
+    maxClientConn: 20
+    reservePoolSize: 5
+    listenPort: 5432
+    #other avaiable configuration
     adminUsers:
+    - admin
     - admin1
-    - admin2
-  users:
-  - username: user1
-    password: user1Pass
-  - username: user2
-    password: user2Pass
-  - username: admin1
-    password: admin1Pass
-  - username: admin2
-    password: admin2Pass
+  userList:
+    secretName: db-user-pass
+    secretNamespace: demo
+  monitor:
+    agent: prometheus.io/coreos-operator
+    prometheus:
+      namespace: monitoring
+      labels:
+        k8s-app: prometheus
+      interval: 10s
+
    
 ```
 
-Here, `Pgbouncer` will be introduced as a new `kind` to handle connection pooling for PostgreSQL. 
+Here, `Pgbouncer` will be introduced as a new `kind` in KubeDB to handle connection pooling for PostgreSQL. 
 
 The `spec` section of `Pgbouncer` will have three fields to specify the database info, pgbouncer connection configuration, and user list. 
 
@@ -68,9 +67,9 @@ The `spec` section of `Pgbouncer` will have three fields to specify the database
 
 This field is to be used to specify detailed information about PostgreSQL databases for which users want to use connection pooling.
 
-- `spec.databases.dbAlias` is used to name a server-database pair. This alias is used to access the mentioned database  via pgbouncer. 
-- `spec.databases.dbName` specifies the name of the target database. This must be a valid database name to facilitate a successful connection. 
-- `spec.databases.pgObjectName` specifies the name of the Postgres object in which the target database is running. This name is used to establish connection from PgBouncer's proxy server to the target server. Primary pod of the Postgres object or the associated service is to be used to establish the said connection. 
+- `spec.databases.alias` is used to name a server-database pair. This alias is used to access the mentioned database  via pgbouncer. 
+- `spec.databases.databaseName` specifies the name of the target database. This must be a valid database name to facilitate a successful connection. 
+- `spec.databases.appBindingName` specifies the name of the Postgres object in which the target database is running. AppBinding is used to ensure universal support for postgres databases mnaged/ not managed by KubeDB. This name is used to establish connection from PgBouncer's proxy server to the target server. Primary pod of the Postgres object or the associated service is to be used to establish the said connection. 
 
 #### spec.pgBouncerConfig:
 
@@ -121,22 +120,23 @@ This field is to be used to specify connection information to configure PgBounce
 - `spec.pgBouncerConfig.maxUserConnections` specifies the maximum number of server connections per-user. It should be noted that when you hit the limit, closing a client connection to one pool will not immediately allow a server connection to be established for another pool, because the server connection for the first pool is still open. Once the server connection closes (due to idle timeout), a new server connection will immediately be opened for the waiting pool.
 
 - `spec.pgBouncerConfig.adminUsers` specifies the list of users who can access PgBouncer admin console.
+ 
+ Most other configuration options that are avaible for PgBouncer binaries should be availble via the crd too.
+#### spec.userList:
 
-#### spec.users:
+Specifies the list of users that are allowed to access Postgres databases via PgBouncer. PgBouncer requires that a text file is provided for the users that have access to certain database(s). For PgBouncer crd, simply create a secret using that userlist file and provide the name and namespace of that secret.
 
-Specifies the list of users that are allowed to access Postgres databases via PgBouncer.
-
-- `spec.users.username` specifies a unique username that has already been defined to be used in a target database. This name must exist in the target database that users want o connect to.  By deafult every Postgres object has a user named `postgres`.
-- `spec.users.password` specifies a password to be associated with a certain username. This password can be random, and doesn't have to be the exact password associated with the username in the target database. However, users will need to use this to connect to the target database via PgBouncer.  
+- `spec.userList.secretName` specifies the name of a secret that contains the userlist file.
+- `spec.userList.secretNamespace` specifies the namespace of a secret that contains the userlist file.
 
 **How it will work?**
 PgBouncer needs a configuration file and a user credentials file. The configuration file contains information about database, and connection configuration. The user credentials file contains username and password of users who are allowed to access databases via PgBouncer.
-We intent to use the CRD above to collect the necessary information to fill out these information. Also the `spec.databases.pgObjectName` of the CRD is to be used in order to establish connection between the primary pod of the postgres object and the clients via PgBouncer.  
+We intent to use the CRD above to collect the necessary information to fill out those information. 
 
 ## KubeDB integration
 
-Our implementation of PgBouncer is expected have close ties with Postgres CRD and KubeDB. As PgBouncer is not version bound, any database inside an accessible Postgres object should be accessible through PgBouncer as it works merely as a proxy between client and PostgreSQL databases. 
+Our implementation of PgBouncer is expected have close ties with Postgres CRD and KubeDB. As PgBouncer is not postgres-version bound, any database inside an accessible PostgreSQL database should be accessible through PgBouncer as it works merely as a proxy between client and PostgreSQL databases. 
 
 PgBouncer is a standalone relaying service. A single instance of PgBouncer can access many different databases running inside different Postgres objects. Therefore, the relation between PgBouncer and Postgres objects is one-to-many. Our intention is to let users leverage this feature to make their workflow easier, and more manageable. 
 
-Additionally, PgBouncer may also possibly be created from Postgres CRD by adding PgBouncer template to it, so that the users can create a connection pooler right from the get go, and then create databases and database users later.
+Additionally, PgBouncer will come with monitoring services, so that users can opt in to monitor detailed connection statistics.
